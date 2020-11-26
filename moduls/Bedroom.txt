@@ -1,0 +1,44 @@
+[Bedroom]
+
+
+pillow
+подушка
+
+bed spread
+покрывало
+
+blanket
+одеяло
+
+sheet
+простыня
+
+mattres
+матрас
+
+alarm clock
+будильник
+
+hanger 
+вешалка
+
+iron
+утюг
+
+mirror
+зеркало
+
+bed
+кровать
+
+carpet
+ковер
+
+bedside table
+тумбочка
+
+wardrobe
+шкаф для одежды 
+
+curtain 
+занавеска

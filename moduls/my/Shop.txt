@@ -1,0 +1,43 @@
+[магазины]
+
+newsagent's
+газетный киоск
+
+florist's
+цветочный магазин
+
+shoe shop
+магазин обуви
+
+hair dresser's
+парикмахерская
+
+post office
+почта
+
+fishmonger's
+рыбный магазин
+
+bakery
+булочная
+
+jeweller's
+ювелирный магазин
+
+chemist's
+аптека
+
+butcher's
+мясной магазин
+
+clothes shop
+магазин одежды
+
+optician's
+оптика
+
+
+
+
+
+

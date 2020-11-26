@@ -1,0 +1,24 @@
+
+station
+станция
+
+garage
+гараж
+
+cafe
+кафэ
+
+theatre
+театр
+
+baker's
+пекарня
+
+hospital
+бальница
+
+greengrocer's
+овощьная лавка
+
+post office
+почта
