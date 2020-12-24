@@ -305,12 +305,21 @@ class DateBase():
 
     # get all Translates of word
     def getTranslatesWord(self, wordID):
+        st = f"""SELECT ID, Word, LanguageID, (SELECT Language
+                                                FROM {BASE_LANGUAGES}
+                                                WHERE {BASE_LANGUAGES}.ID = LanguageID)
+        FROM {BASE_WORDS}         
+        WHERE TranslateID = (
+                                   SELECT TranslateID
+                                     FROM {BASE_WORDS}
+                                    WHERE ID = {wordID} 
+                               ) AND
+        ID != {wordID}"""
         cur = self.con.cursor()
-        result = cur.execute(f"""SELECT GroupID, GroupName  
-        FROM {BASE_WORDS_OF_GROUPS}
-        LEFT JOIN {BASE_GROUPS} ON GroupID = {BASE_GROUPS}.ID
-        WHERE WordID = {wordID}""").fetchall()
-        return result
+        res = cur.execute(st).fetchall()
+        return res
+
+
 
     # get ID of name group
     def getGroupID(self, group):

@@ -312,22 +312,33 @@ class ViewWordWidget(QWidget):
         langID, lang = lang
         self.labelWord.setText("Слово:\t" + word)
         self.labelLang.setText("Язык:\t" + lang)
-        self.textDiscript.setPlainText(descript)
+
+        self.textDiscript.setPlainText(descript if descript != db.NULL else "Описание:")
         self.textDiscript.setEnabled(False)
         self.tableGroups.setRowCount(0)
-        self.tableGroups.setHorizontalHeaderLabels(["Группа", "Zpsrb"])
-        i_g = 0
-        for Group in base.getGroupsWord(idWord):
-            print("Group:", Group)
-            groupID, group = Group
+        # self.tableGroups.setHorizontalHeaderLabels(["Группа", "Zpsrb"])
+        groups = base.getGroupsWord(idWord)
+        for i_g in range(len(groups)):
+            groupID, group = groups[i_g]
             self.tableGroups.insertRow(i_g)
-            labels = (group, )
+            labels = (group,)
             for i_c in range(len(labels)):
                 item = QTableWidgetItem(labels[i_c])
                 self.tableGroups.setItem(i_g, i_c, item)
-                print("label", labels[i_c])
-            i_g += 1
 
+
+        self.tableTranslate.setRowCount(0)
+        self.tableTranslate.setHorizontalHeaderLabels(self.headerTranslate)
+        wordsT = base.getTranslatesWord(idWord)
+
+        for i_g in range(len(wordsT)):
+            wordIDT, wordT, langIDT, langT = wordsT[i_g]
+            self.tableTranslate.insertRow(i_g)
+            labels = (wordT, langT)
+            for i_c in range(len(labels)):
+                item = QTableWidgetItem(labels[i_c])
+                self.tableTranslate.setItem(i_g, i_c, item)
+                print("label Trans", labels[i_c])
 
     def editWord(self):
         self.funcEditWord(self.wordID)
