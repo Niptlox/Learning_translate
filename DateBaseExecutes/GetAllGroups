@@ -1,0 +1,10 @@
+SELECT Groups.GroupID,
+       Groups.GroupName,
+       Words.LanguageID,
+       COUNT(Words.LanguageID) 
+  FROM WordsGroup
+       LEFT JOIN
+       Words ON WordsGroup.WordID = Words.WordID
+       LEFT JOIN
+       Groups ON WordsGroup.GroupID = Groups.GroupID
+GROUP BY Words.LanguageID, Groups.GroupID;

@@ -1,0 +1,8 @@
+SELECT
+             Words.LanguageID,
+             COUNT(Words.LanguageID)
+FROM
+	WordsGroup
+LEFT JOIN Words ON WordsGroup.WordID = Words.WordID
+WHERE GroupID = 2
+GROUP BY Words.LanguageID;

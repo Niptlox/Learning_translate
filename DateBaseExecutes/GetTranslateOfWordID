@@ -1,0 +1,9 @@
+SELECT WordID, Word
+  FROM Words
+ WHERE Words.TranslateID = (
+                               SELECT TranslateID
+                                 FROM Words
+                                WHERE Words.WordID = 1
+                           )
+AND 
+       LanguageID = 3;

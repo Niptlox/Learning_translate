@@ -1,0 +1,10 @@
+SELECT Words.WordID,
+       Words.Word,
+       Languages.ID,
+       Words.TranslateID
+  FROM WordsGroup
+       LEFT JOIN
+       Words ON WordsGroup.WordID = Words.WordID
+       LEFT JOIN
+       Languages ON Words.LanguageID = Languages.ID
+       WHERE WordsGroup.GroupID = 2
