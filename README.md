@@ -1,2 +1,2 @@
-# Learning_translate
-This programm help for learning translate word
+# Learning translate
+This program will help you learn the translation of words
