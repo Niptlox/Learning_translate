@@ -5,7 +5,8 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, \
     QStackedLayout, QHBoxLayout, \
     QVBoxLayout, QTableWidget, \
-    QTableWidgetItem, QListWidget, QPlainTextEdit
+    QTableWidgetItem, QListWidget, \
+    QPlainTextEdit, QLineEdit
 
 from PyQt5.QtWidgets import QAbstractItemView, QHeaderView
 
@@ -65,14 +66,17 @@ class ExplorerWords(QWidget):
         # self.setGeometry(500, 500, *self._size)
         self.setWindowTitle("Браузер слов")
         self.stackedLayout = QStackedLayout()
-        self.groupsWidget = TableGroupsWidget(self.base, funcVisibleGroup=self.visibleGroup)
+        self.groupsWidget = TableGroupsWidget(self.base,
+                                              funcVisibleGroup=self.visibleGroup,
+                                              funcAddGroup=lambda: print("addGroup"))
         self.wordsWidget = TableWordsWidget(self.base,
                                             funcVisibleWord=self.visibleWord,
-                                            funcBack=self.visibleGroups)
+                                            funcBack=self.visibleGroups,
+                                            funcAddWord=lambda x: print("addWord", x))
 
         self.wordVWidget = ViewWordWidget(self.base,
                                           funcEditWord=lambda x: print("EditWord " + str(x)),
-                                          funcBack=lambda: self.visibleGroups(self.groupID))
+                                          funcBack=lambda: self.visibleGroup(self.groupID))
 
         self.stackedLayout.addWidget(self.groupsWidget)
         self.stackedLayout.setCurrentIndex(0)
@@ -92,15 +96,17 @@ class ExplorerWords(QWidget):
 
     def visibleWord(self, wordID):
         print("VWord", wordID)
+        # self.wordVWidget.funcBack =
         self.wordVWidget.setWord(wordID)
         self.stackedLayout.setCurrentIndex(2)
 
 
 class TableGroupsWidget(QWidget):
-    def __init__(self, base, funcVisibleGroup=None):
+    def __init__(self, base, funcVisibleGroup=None, funcAddGroup=None):
         super().__init__()
         self.base = base
         self.funcVisibleGroup = lambda: funcVisibleGroup(self.IDsGroup[self.table.currentRow()])
+        self.funcAddGroup = funcAddGroup
         self.initUI()
 
     def initUI(self):
@@ -114,11 +120,15 @@ class TableGroupsWidget(QWidget):
         self.butLayout = butLayout = QHBoxLayout()
         butLayout.addStretch()
         main_box.addLayout(butLayout)
-        self.butVisible = butVisible = QPushButton("Просмотр")
-        # butVisible.setEnabled(False)
-        butVisible.clicked.connect(self.funcVisibleGroup)
-        butVisible.setMinimumWidth(130)
 
+        self.butAdd = butAdd = QPushButton("Добавить")
+        butAdd.clicked.connect(self.funcAddGroup)
+        butAdd.setMinimumWidth(100)
+        butLayout.addWidget(butAdd)
+
+        self.butVisible = butVisible = QPushButton("Просмотр")
+        butVisible.clicked.connect(self.funcVisibleGroup)
+        butVisible.setMinimumWidth(100)
         butLayout.addWidget(butVisible)
 
         self.fillTable()
@@ -159,11 +169,14 @@ class TableGroupsWidget(QWidget):
 
 
 class TableWordsWidget(QWidget):
-    def __init__(self, base, funcVisibleWord=None, funcBack=None):
+    def __init__(self, base, funcVisibleWord=None, funcBack=None, funcAddWord=None):
         super().__init__()
         self.base = base
-        self.funcVisibleWord = lambda: funcVisibleWord(self.IDsWords[self.table.currentRow()])
+        # funcVisibleWord = print
+        self.funcVisibleWord = lambda: funcVisibleWord(
+            self.IDsWords[self.table.item(self.table.currentRow(), 0).text()])
         self.funcBack = funcBack
+        self.funcAddWord = lambda: funcAddWord(self.groupID)
         # self.groupID = groupID
         self.initUI()
 
@@ -174,6 +187,7 @@ class TableWordsWidget(QWidget):
         self.table = self.createTable()
         self.table.cellClicked.connect(self.activCell)
         self.table.cellDoubleClicked.connect(self.funcVisibleWord)
+        self.table.setSortingEnabled(False)
 
         main_box.addWidget(self.table)
         self.butLayout = butLayout = QHBoxLayout()
@@ -186,10 +200,15 @@ class TableWordsWidget(QWidget):
 
         butLayout.addStretch()
 
+        self.butAdd = butAdd = QPushButton("Добавить")
+        butAdd.clicked.connect(self.funcAddWord)
+        butAdd.setMinimumWidth(100)
+        butLayout.addWidget(butAdd)
+
         self.butVisible = butVisible = QPushButton("Просмотр")
         butVisible.setEnabled(False)
         butVisible.clicked.connect(self.funcVisibleWord)
-        butVisible.setMinimumWidth(130)
+        butVisible.setMinimumWidth(100)
         butLayout.addWidget(butVisible)
 
         self.setLayout(main_box)
@@ -206,6 +225,7 @@ class TableWordsWidget(QWidget):
         self.table.scrollToTop()
         table = self.table
         groupID = self.groupID if groupID is None else groupID
+        self.groupID = groupID
         table.clear()
         words = self.base.getWordsOfGroup(groupID)
         langs = self.base.getAllLanguage()
@@ -216,24 +236,29 @@ class TableWordsWidget(QWidget):
         n = len(words) * 2
         table.setRowCount(0)
         table.setHorizontalHeaderLabels(['Слово', 'Язык', 'Перевод'])
-        self.IDsWords = []
+        self.IDsWords = {}
+        print("n:", n)
         for i_g in range(n // 2):
             # группа слов однокового перевода
             groupWord = words[i_g]
             i_w = 0
+            # print("i_g", i_g)
             for Word in groupWord:
                 idWord, word, idLang = Word
-                self.IDsWords.append(idWord)
-                table.insertRow(i_g)
+                # ii = i_g + (n // 2) * i_w
+                # print(ii, "i_g", i_g, (n // 2) * i_w)
+                # self.IDsWords.append(idWord)
+                table.insertRow(i_g + i_w)
 
                 # print(f'{group["ID"]}. Группа: {group["Name"]}  Количество слов: {group["CountWords"]} \n Языки: {langs}')
                 labels = (word, langs[idLang][0], groupWord[(i_w + 1) % len(groupWord)][1])
-                print("labels word:", labels)
+                self.IDsWords[labels[0]] = idWord
+                # print("labels word:", labels)
                 for i_c in range(len(labels)):
                     item = QTableWidgetItem(labels[i_c])
-                    table.setItem(i_g, i_c, item)
-                i_g += 1
+                    table.setItem(i_g + i_w, i_c, item)
                 i_w += 1
+        print(self.IDsWords)
         return table
 
     def activCell(self, row, coumn):
@@ -269,14 +294,15 @@ class ViewWordWidget(QWidget):
         size = (400, 300)
         w, h = size
 
-
-
-
         # main_box.addWidget(QLabel("Перевод"))
         sizeT = (400, 80)
         self.headerTranslate = ["Перевод", "Язык"]
         self.tableTranslate = createTable(sizeT, self.headerTranslate, [0.6, None])
         main_box.addWidget(self.tableTranslate)
+        # self.setWord lambda r, c: print(self.IDsWords[c]) self.table.item(self.table.currentRow(), 0
+        # self.IDsWords[self.table.item(self.table.currentRow(), 0).text()]
+        self.tableTranslate.cellDoubleClicked.connect(
+            lambda r, c: self.setWord(self.IDsWords[self.tableTranslate.item(r, 0).text()]))
 
         main_box.addWidget(QLabel("Группы"))
         sizeT = (400, 80)
@@ -304,7 +330,7 @@ class ViewWordWidget(QWidget):
         main_box.addStretch()
 
     def setWord(self, idWord):
-        self.idWord = idWord
+        self.wordID = idWord
         print(1)
         Word = self.base.getWord(idWord)
         print(Word)
@@ -326,13 +352,14 @@ class ViewWordWidget(QWidget):
                 item = QTableWidgetItem(labels[i_c])
                 self.tableGroups.setItem(i_g, i_c, item)
 
-
         self.tableTranslate.setRowCount(0)
         self.tableTranslate.setHorizontalHeaderLabels(self.headerTranslate)
+        self.IDsWords = {}
         wordsT = base.getTranslatesWord(idWord)
 
         for i_g in range(len(wordsT)):
             wordIDT, wordT, langIDT, langT = wordsT[i_g]
+            self.IDsWords[wordT] = wordIDT
             self.tableTranslate.insertRow(i_g)
             labels = (wordT, langT)
             for i_c in range(len(labels)):
@@ -341,7 +368,149 @@ class ViewWordWidget(QWidget):
                 print("label Trans", labels[i_c])
 
     def editWord(self):
-        self.funcEditWord(self.wordID)
+        print("wordID", self.wordID)
+        try:
+            self.funcEditWord(self.wordID)
+        except:
+            print(self.wordID)
+
+
+class EditWordWidget(QWidget):
+    def __init__(self, base, funcBack=None):
+        super().__init__()
+        self.base = base
+        self.funcBack = funcBack
+        # self.groupID = groupID
+        self.initUI()
+
+    def initUI(self):
+        main_box = QVBoxLayout()
+        self.setLayout(main_box)
+
+        main_box.addWidget(QLabel(f"Редактор слова"))
+
+        self.labelWord = QLineEdit()
+        main_box.addWidget(self.labelWord)
+
+        self.labelLang = QLabel()
+        main_box.addWidget(self.labelLang)
+
+        self.textDiscript = QPlainTextEdit()
+        self.textDiscript.setMaximumHeight(50)
+        main_box.addWidget(self.textDiscript)
+
+        size = (400, 300)
+        w, h = size
+
+        # main_box.addWidget(QLabel("Перевод"))
+        sizeT = (400, 80)
+        self.headerTranslate = ["Перевод", "Язык"]
+        self.tableTranslate = createTable(sizeT, self.headerTranslate, [0.6, None])
+        main_box.addWidget(self.tableTranslate)
+        # self.setWord lambda r, c: print(self.IDsWords[c]) self.table.item(self.table.currentRow(), 0
+        # self.IDsWords[self.table.item(self.table.currentRow(), 0).text()]
+        self.tableTranslate.cellDoubleClicked.connect(
+            lambda r, c: self.setWord(self.IDsWords[self.tableTranslate.item(r, 0).text()]))
+
+        main_box.addWidget(QLabel("Группы"))
+        sizeT = (400, 80)
+        self.tableGroups = createTable(sizeT, [""], [None], maximumHeight=80)
+        self.tableGroups.horizontalHeader().hide()
+        main_box.addWidget(self.tableGroups)
+
+        # self.table.cellClicked.connect(self.activCell)
+        # self.table.cellDoubleClicked.connect(self.funcVisibleWord)
+
+        self.butLayout = butLayout = QHBoxLayout()
+        main_box.addLayout(butLayout)
+
+        self.butBack = QPushButton("Назад")
+        self.butBack.clicked.connect(self.funcBack)
+        self.butBack.setMinimumWidth(130)
+        butLayout.addWidget(self.butBack)
+
+        self.butLayout.addStretch()
+
+        self.butEdit = QPushButton("Изменить")
+        self.butEdit.clicked.connect(self.editWord)
+        self.butEdit.setMinimumWidth(130)
+        butLayout.addWidget(self.butEdit)
+        main_box.addStretch()
+
+    def setWord(self, groupID=None):
+        self.wordID = idWord
+        print(1)
+        Word = self.base.getWord(idWord)
+        print(Word)
+        idWord, word, lang, translateID, descript = Word
+        langID, lang = lang
+        self.labelWord.setText("Слово:\t" + word)
+        self.labelLang.setText("Язык:\t" + lang)
+
+        self.textDiscript.setPlainText(descript if descript != db.NULL else "Описание:")
+
+        self.tableGroups.setRowCount(0)
+        # self.tableGroups.setHorizontalHeaderLabels(["Группа", "Zpsrb"])
+        groups = base.getGroupsWord(idWord)
+        for i_g in range(len(groups)):
+            groupID, group = groups[i_g]
+            self.tableGroups.insertRow(i_g)
+            labels = (group,)
+            for i_c in range(len(labels)):
+                item = QTableWidgetItem(labels[i_c])
+                self.tableGroups.setItem(i_g, i_c, item)
+
+        self.tableTranslate.setRowCount(0)
+        self.tableTranslate.setHorizontalHeaderLabels(self.headerTranslate)
+        self.IDsWords = {}
+        wordsT = base.getTranslatesWord(idWord)
+
+        for i_g in range(len(wordsT)):
+            wordIDT, wordT, langIDT, langT = wordsT[i_g]
+            self.IDsWords[wordT] = wordIDT
+            self.tableTranslate.insertRow(i_g)
+            labels = (wordT, langT)
+            for i_c in range(len(labels)):
+                item = QTableWidgetItem(labels[i_c])
+                self.tableTranslate.setItem(i_g, i_c, item)
+                print("label Trans", labels[i_c])
+
+    def editWord(self):
+        print("wordID", self.wordID)
+        try:
+            self.funcEditWord(self.wordID)
+        except:
+            print(self.wordID)
+
+
+#
+# class TableWords(QTableWidget):
+#     def __init__(self, groupID=None, translateID=None):
+#         super()
+#         # size = (400, 300)
+#         w, h = size
+#         headerLabels = []
+#         n = len(headerLabels)
+#         print("len(headerLabels)", (headerLabels))
+#         table = QTableWidget(0, n)
+#         table.setHorizontalHeaderLabels(headerLabels)
+#         # table.setMaximumSize(*size)
+#         # table.setFixedSize(*size)
+#
+#         table.setMinimumSize(*size)
+#         if maximumHeight:
+#             table.setMaximumHeight(maximumHeight)
+#         for i in range(n):
+#             w_c = widthColumns[i]
+#             if w_c is not None:
+#                 table.setColumnWidth(i, w_c if w_c > 1 else w_c * w)
+#         table.setSelectionBehavior(QAbstractItemView.SelectRows)
+#         table.setSelectionMode(QAbstractItemView.SingleSelection)
+#         table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+#         table.horizontalHeader().setStretchLastSection(lastStretch)
+#         table.verticalHeader().hide()
+#         table.horizontalHeader().setSectionResizeMode(n - 1, QHeaderView.ResizeToContents)
+#         # table.verticalHeader()
 
 
 if __name__ == '__main__':
