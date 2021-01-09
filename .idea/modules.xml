@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Learning_translate.iml" filepath="$PROJECT_DIR$/.idea/Learning_translate.iml" />
       <module fileurl="file://$PROJECT_DIR$/../../../Yandex/Tasks/.idea/Tasks.iml" filepath="$PROJECT_DIR$/../../../Yandex/Tasks/.idea/Tasks.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../expServerApiMaps/.idea/expServerApiMaps.iml" filepath="$PROJECT_DIR$/../../expServerApiMaps/.idea/expServerApiMaps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../serverApiMaps/.idea/serverApiMaps.iml" filepath="$PROJECT_DIR$/../../serverApiMaps/.idea/serverApiMaps.iml" />
     </modules>
   </component>
 </project>

@@ -25,29 +25,36 @@ ROUNDED_STYLE_SHEET1 = """QPushButton {
  }"""
 
 
-def createTable(size, headerLabels, widthColumns, lastStretch=True, maximumHeight=None):
+def createTable(size, headerLabels, widthColumns, lastStretch=True, maximumHeight=None, hideFColumn=False,
+                tableWidget=None):
     # size = (400, 300)
     w, h = size
     n = len(headerLabels)
     print("len(headerLabels)", (headerLabels))
-    table = QTableWidget(0, n)
+
+    table = QTableWidget(0, n) if tableWidget is None else tableWidget
+    table.setColumnCount(n)
     table.setHorizontalHeaderLabels(headerLabels)
+    if hideFColumn:
+        table.hideColumn(0)
+    if maximumHeight:
+        table.setMaximumHeight(maximumHeight)
     # table.setMaximumSize(*size)
     # table.setFixedSize(*size)
 
     table.setMinimumSize(*size)
-    if maximumHeight:
-        table.setMaximumHeight(maximumHeight)
+
     for i in range(n):
         w_c = widthColumns[i]
         if w_c is not None:
             table.setColumnWidth(i, w_c if w_c > 1 else w_c * w)
+    print(3)
     table.setSelectionBehavior(QAbstractItemView.SelectRows)
     table.setSelectionMode(QAbstractItemView.SingleSelection)
     table.setEditTriggers(QAbstractItemView.NoEditTriggers)
     table.horizontalHeader().setStretchLastSection(lastStretch)
     table.verticalHeader().hide()
-    table.horizontalHeader().setSectionResizeMode(n - 1, QHeaderView.ResizeToContents)
+    # table.horizontalHeader().setSectionResizeMode(n - 1, QHeaderView.ResizeToContents)
     # table.verticalHeader()
     return table
 
@@ -78,6 +85,10 @@ class ExplorerWords(QWidget):
                                           funcEditWord=lambda x: print("EditWord " + str(x)),
                                           funcBack=lambda: self.visibleGroup(self.groupID))
 
+        tw = TableWords(base, groupID=False, descript=True)
+        tw.updateTable()
+
+        self.stackedLayout.addWidget(tw)
         self.stackedLayout.addWidget(self.groupsWidget)
         self.stackedLayout.setCurrentIndex(0)
         self.stackedLayout.addWidget(self.wordsWidget)
@@ -233,6 +244,7 @@ class TableWordsWidget(QWidget):
         # ((ид3, слово3, ид_языка1), (ид4, слово4, ид_языка2)))
         words = list(
             zip(*map(lambda x: map(lambda y: list(y[1]) + [x[0]], sorted(x[1].items())), sorted(words.items()))))
+        print("Words", words)
         n = len(words) * 2
         table.setRowCount(0)
         table.setHorizontalHeaderLabels(['Слово', 'Язык', 'Перевод'])
@@ -483,40 +495,72 @@ class EditWordWidget(QWidget):
             print(self.wordID)
 
 
-#
-# class TableWords(QTableWidget):
-#     def __init__(self, groupID=None, translateID=None):
-#         super()
-#         # size = (400, 300)
-#         w, h = size
-#         headerLabels = []
-#         n = len(headerLabels)
-#         print("len(headerLabels)", (headerLabels))
-#         table = QTableWidget(0, n)
-#         table.setHorizontalHeaderLabels(headerLabels)
-#         # table.setMaximumSize(*size)
-#         # table.setFixedSize(*size)
-#
-#         table.setMinimumSize(*size)
-#         if maximumHeight:
-#             table.setMaximumHeight(maximumHeight)
-#         for i in range(n):
-#             w_c = widthColumns[i]
-#             if w_c is not None:
-#                 table.setColumnWidth(i, w_c if w_c > 1 else w_c * w)
-#         table.setSelectionBehavior(QAbstractItemView.SelectRows)
-#         table.setSelectionMode(QAbstractItemView.SingleSelection)
-#         table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-#         table.horizontalHeader().setStretchLastSection(lastStretch)
-#         table.verticalHeader().hide()
-#         table.horizontalHeader().setSectionResizeMode(n - 1, QHeaderView.ResizeToContents)
-#         # table.verticalHeader()
+class TableWords(QTableWidget):
+    def __init__(self, base, size=(500, 300), maxHeight=None, translateID=True, groupID=None, descript=False):
+        super().__init__()
+        self.base = base
+        self._size = size
+        self.groupID = groupID
+        self.translateID = translateID
+        headerLabels = ["ID"]
+        widthColumns = [0]
+        if type(groupID) != int:
+            headerLabels += ["Слово", "Язык"]
+            widthColumns += [0.5, 0.2]
+        else:
+            headerLabels += ["Слово", "Язык", "Перевод"]
+            widthColumns += [0.35, 0.23, 0.35]
+        if descript:
+            headerLabels.append("Описание")
+            widthColumns.append(None)
+        self.headerLabels = headerLabels
+        print("size, headerLabels, widthColumns", size, headerLabels, widthColumns)
+        createTable(size, headerLabels, widthColumns, lastStretch=True, maximumHeight=maxHeight, hideFColumn=True,
+                    tableWidget=self)
+        print(1)
+
+    def updateTable(self):
+        self.clear()
+        self.setRowCount(0)
+        self.setHorizontalHeaderLabels(self.headerLabels)
+        if self.groupID:
+            words = self.base.getWordsOfGroup(self.groupID)
+            langs = self.base.getAllLanguage()
+            # преводим к виду (((ид1, слово1, ид_языка1), (ид2, слово2, ид_языка2)),
+            # ((ид3, слово3, ид_языка1), (ид4, слово4, ид_языка2)))
+            words = list(
+                zip(*map(lambda x: map(lambda y: list(y[1]) + [x[0]], sorted(x[1].items())), sorted(words.items()))))
+            print("Words", words)
+            n = len(words) * 2
+            self.IDsWords = {}
+            print("n:", n)
+            for i_g in range(n // 2):
+                # группа слов однокового перевода
+                groupWord = words[i_g]
+                i_w = 0
+                # print("i_g", i_g)
+                for Word in groupWord:
+                    idWord, word, idLang = Word
+                    # ii = i_g + (n // 2) * i_w
+                    # print(ii, "i_g", i_g, (n // 2) * i_w)
+                    # self.IDsWords.append(idWord)
+                    self.insertRow(i_g + i_w)
+
+                    # print(f'{group["ID"]}. Группа: {group["Name"]}  Количество слов: {group["CountWords"]} \n Языки: {langs}')
+                    labels = (idWord, word, langs[idLang][0], groupWord[(i_w + 1) % len(groupWord)][1])
+                    self.IDsWords[labels[0]] = idWord
+                    # print("labels word:", labels)
+                    for i_c in range(len(labels)):
+                        item = QTableWidgetItem(labels[i_c])
+                        self.setItem(i_g + i_w, i_c, item)
+                    i_w += 1
+            print(self.IDsWords)
+            return self
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     base = db.DateBase("Learning_translate.sqlite")
-
     window = ExplorerWords(base)
     window.show()
     sys.exit(app.exec())

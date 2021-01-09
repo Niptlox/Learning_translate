@@ -43,6 +43,10 @@ class DateBase():
         self.name_db = name_db
         self.mainLanguageID = self.getLanguageID_Main()
 
+    # get name of db
+    def getName(self):
+        return self.name_db
+
     # add group words and translate
     def addDict(self, dictW, group, newGroup=False):
         if newGroup:
@@ -181,6 +185,13 @@ class DateBase():
             dictWords[langID][translateID] = (wordID, word)
         # print(dictWords)
         return dictWords
+
+    def execute(self, st_exec, commit=False):
+        cur = self.con.cursor()
+        res = cur.execute(st_exec)
+        if commit:
+            self.commit()
+        return res
 
     # add word to group
     def addWordToGroup(self, wordID, groupID, commit=True):
