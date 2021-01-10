@@ -59,16 +59,21 @@ class DateBase():
         langID2 = self.getLanguageID(langs[1])
         words = list(dictW.items())
         for word1, word2 in dictW.items():
-            out = self.addWord(word1, LanguageID=langID1, newCommit=False)
+            translateID = NULL
+            out2 = self.wordInBase(word2, langID2)
+            if out2:
+                wordID, translateID = out2
+            out = self.addWord(word1, LanguageID=langID1,
+                               newCommit=False, translateID=translateID)
             print(out)
             if out:
                 wordID, translateID = out
-                self.addWordToGroup(wordID, groupID)
+                self.addWordToGroup(wordID, groupID, commit=False)
                 out = self.addWord(word2, LanguageID=langID2,
                                    translateID=translateID, newCommit=False)
                 if out:
                     wordID, translateID = out
-                    self.addWordToGroup(wordID, groupID)
+                    self.addWordToGroup(wordID, groupID, commit=False)
         self.commit()
 
     # add word and translate to datebase and return wordID, translateID
@@ -160,10 +165,12 @@ class DateBase():
                         GROUP BY {BASE_GROUPS}.ID, {BASE_WORDS}.LanguageID;"""
         cur = self.con.cursor()
         res = cur.execute(st_exec).fetchall()
+        print(res)
         out = []
         lastID = None
         for st in res:
             groupID, groupName, countW, lang, langID = st
+
             if lastID == groupID:
                 out[-1][P_LANGS].append((langID, lang))
             else:
@@ -173,6 +180,11 @@ class DateBase():
 
         # print(out)
         return out
+
+    def getNameGroup(self, groupID):
+        cur = self.con.cursor()
+        res = cur.execute(f"SELECT GroupName FROM {BASE_GROUPS} WHERE ID = {groupID}").fetchone()
+        return res[0] if res is not None else None
 
     # get words for groupID
     def getWordsOfGroup(self, groupID):
@@ -238,6 +250,17 @@ class DateBase():
         cur = self.con.cursor()
         cur.execute(f"""DELETE FROM {BASE_WORDS_OF_GROUPS}
                         WHERE GroupID = {groupID} AND WordID = {wordID}""")
+        if commit:
+            self.con.commit()
+
+    # del  group
+    def delGroup(self, groupID, commit=True):
+        cur = self.con.cursor()
+        cur.execute(f"""DELETE FROM {BASE_WORDS_OF_GROUPS}
+                        WHERE GroupID = {groupID}
+                        """)
+        cur.execute(f"""DELETE FROM {BASE_GROUPS}
+        WHERE ID = {groupID}""")
         if commit:
             self.con.commit()
 
@@ -368,8 +391,8 @@ class DateBase():
     def getGroupID(self, group):
         cur = self.con.cursor()
         result = cur.execute(f"""SELECT ID FROM {BASE_GROUPS}
-                WHERE GroupName = '{group}'""").fetchone()[0]
-        return result
+                WHERE GroupName = '{group}'""").fetchone()
+        return result[0] if result is not None else None
 
     # get ID of main language
     def getLanguageID_Main(self):
@@ -379,21 +402,30 @@ class DateBase():
         return result
 
 
-def addFileToBase(base, file="moduls/Bedroom.txt"):
-    with open(file) as f:
-        modul_name = f.readline().replace(" ", "")[1:-2]
-        langs = f.readline().replace(" ", "")[1:-2].split(";")
-        text = list(filter(lambda st: st != "", f.read().splitlines()))
-        words = {text[i]: text[i + 1] for i in range(0, len(text), 2)}
+def addTextToBase(base, textIN: str):
+    ar = list(filter(lambda st: st != "", textIN.splitlines()))
+    parm = tuple(map(lambda st: st.replace(" ", ""), ar[:2]))
+    modul_name = parm[0][1:-1]
+    langs = parm[1][1:-1].split(";")
+    print(modul_name, langs)
+    text = ar[2:]
+    words = {text[i]: text[i + 1] for i in range(0, len(text), 2)}
     words[P_LANGS] = langs
     # print(words, modul_name)
-    base.addDict(words, modul_name, newGroup=True)
+    base.addDict(words, modul_name, newGroup=False)
+
+def addFileToBase(base, file="moduls/Bedroom.txt"):
+    with open(file) as f:
+        text = f.read()
+        addTextToBase(base, text)
 
 
 if __name__ == '__main__':
     base = DateBase()
+    base.delGroup(7)
+    # intii
     print(*base.getGroups(), sep="\n\n")
-    print(base.getWordsOfGroup(2))
-    nameF = "moduls/think.txt"
-    addFileToBase(base, nameF, newGroup=False)
+    print(base.getWordsOfGroup(8))
+    nameF = "moduls/d_beruh.txt"
+    addFileToBase(base, nameF)
     # print(base.getWord(74))
