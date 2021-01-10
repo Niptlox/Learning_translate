@@ -100,7 +100,19 @@ class DateBase():
         arW = list(cur.execute(st_exec).fetchone())
         lang = (arW[2], arW.pop(-1))
         arW[2] = lang
+        return arW
 
+    def getAllWords(self):
+        cur = self.con.cursor()
+
+        st_exec = f"""SELECT ID, 
+        Word, 
+        LanguageID, 
+        (SELECT Language FROM {BASE_LANGUAGES} WHERE LanguageID = ID),
+        TranslateID,
+        Description
+         FROM  {BASE_WORDS}"""
+        arW = cur.execute(st_exec).fetchall()
         return arW
 
     # del word
@@ -183,6 +195,26 @@ class DateBase():
             if langID not in dictWords:
                 dictWords[langID] = {}
             dictWords[langID][translateID] = (wordID, word)
+        # print(dictWords)
+        return dictWords
+
+    def getWordsOfGroupSTR(self, groupID):
+        st_exec = f"""SELECT ID,
+                           Word,
+                           (SELECT Language FROM {BASE_LANGUAGES} WHERE LanguageID = ID),
+                           LanguageID,       
+                           TranslateID
+                        FROM {BASE_WORDS}
+                        LEFT JOIN {BASE_WORDS_OF_GROUPS} ON WordsGroup.WordID = ID
+                        WHERE GroupID = {groupID};"""
+        cur = self.con.cursor()
+        res = cur.execute(st_exec).fetchall()
+        dictWords = {}
+        for st in res:
+            wordID, word, lang, langID, translateID = st
+            if translateID not in dictWords:
+                dictWords[translateID] = []
+            dictWords[translateID].append((wordID, word, langID, lang))
         # print(dictWords)
         return dictWords
 
