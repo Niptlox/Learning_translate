@@ -69,9 +69,9 @@ class MainWindow(QWidget):
         self.testWidget.newQestion()
 
     def viewResult(self, cof, words, maxCWords):
-        self.stackedLayout.setCurrentIndex(4)
-        print("viewResult")
         self.resultWidget.setResult(cof * 100, words, maxCWords)
+        self.stackedLayout.setCurrentIndex(4)
+        print("viewResult", cof)
 
     def startLearn(self):
         self.stackedLayout.setCurrentIndex(1)
@@ -357,6 +357,7 @@ class TestWidget(QWidget):
         out = self.test.question()
         if out is None:
             self.finishTest()
+            return
         self.que = out
         word, iTrans, trans = out
         self.outLabel.setText("")
@@ -394,7 +395,10 @@ class TestWidget(QWidget):
         if self.test.typeTest == core.TEST_CONTROL:
             maxw = self.test.getCountWords()
             cof = w / maxw
-        self.funcFinish(cof, w, maxw)
+        try:
+            self.funcFinish(cof, w, maxw)
+        except Exception as ex:
+            print(ex)
 
 
 
@@ -433,8 +437,10 @@ class ResultWidget(QWidget):
         butLayout.addWidget(self.butBack)
 
     def setResult(self, bals, words, maxWords):
+        print(bals, words, maxWords)
         self.resLabel.setText(f"{round(bals, 2)} баллов")
         self.resWLabel.setText(f"Переведено правильно: {words} из {maxWords} слов")
+        print(1)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
