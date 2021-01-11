@@ -181,6 +181,39 @@ class DateBase():
         # print(out)
         return out
 
+    def getGroup(self, groupID):
+        st_exec = f"""SELECT {BASE_GROUPS}.ID,
+                             {BASE_GROUPS}.GroupName,
+                             COUNT({BASE_WORDS}.LanguageID),
+                             {BASE_LANGUAGES}.Language,
+                             {BASE_LANGUAGES}.ID
+                          FROM {BASE_WORDS_OF_GROUPS}
+                               LEFT JOIN
+                               {BASE_WORDS} ON {BASE_WORDS_OF_GROUPS}.WordID = {BASE_WORDS}.ID
+                               LEFT JOIN
+                               {BASE_GROUPS} ON {BASE_WORDS_OF_GROUPS}.GroupID = {BASE_GROUPS}.ID
+                               LEFT JOIN 
+                               {BASE_LANGUAGES} ON {BASE_WORDS}.LanguageID = {BASE_LANGUAGES}.ID
+                        WHERE {BASE_WORDS_OF_GROUPS}.GroupID = {groupID}
+                        GROUP BY {BASE_GROUPS}.ID, {BASE_WORDS}.LanguageID"""
+        cur = self.con.cursor()
+        res = cur.execute(st_exec).fetchall()
+        print(res)
+        out = []
+        lastID = None
+        for st in res:
+            groupID, groupName, countW, lang, langID = st
+
+            if lastID == groupID:
+                out[-1][P_LANGS].append((langID, lang))
+            else:
+                d = {"ID": groupID, "Name": groupName, "CountWords": countW, P_LANGS: [(langID, lang)]}
+                out.append(d)
+                lastID = groupID
+
+        # print(out)
+        return out[0] if out else None
+
     def getNameGroup(self, groupID):
         cur = self.con.cursor()
         res = cur.execute(f"SELECT GroupName FROM {BASE_GROUPS} WHERE ID = {groupID}").fetchone()
@@ -422,7 +455,8 @@ def addFileToBase(base, file="moduls/Bedroom.txt"):
 
 if __name__ == '__main__':
     base = DateBase()
-    base.delGroup(7)
+    gr = base.getGroup(7)
+    print("gr", gr)
     # intii
     print(*base.getGroups(), sep="\n\n")
     print(base.getWordsOfGroup(8))

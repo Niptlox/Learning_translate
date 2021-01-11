@@ -351,7 +351,7 @@ class ViewWordWidget(QWidget):
         self.textDiscript.setEnabled(False)
         self.tableGroups.setRowCount(0)
         # self.tableGroups.setHorizontalHeaderLabels(["Группа", "Zpsrb"])
-        groups = base.getGroupsWord(idWord)
+        groups = self.base.getGroupsWord(idWord)
         for i_g in range(len(groups)):
             groupID, group = groups[i_g]
             self.tableGroups.insertRow(i_g)
@@ -393,7 +393,7 @@ class TableMy(QTableWidget):
             widthColumns += [0.35, 0.23, None]
         elif typeView == TVIEWGROUPS:
             headerLabels += ['Группа', 'Количество пар', 'Языки']
-            widthColumns += [0.35, 0.23, None]
+            widthColumns += [0.32, 0.28, None]
 
         self.headerLabels = headerLabels
         print("size, headerLabels, widthColumns", size, headerLabels, widthColumns)
@@ -428,11 +428,11 @@ class TableMy(QTableWidget):
                      "; ".join(map(lambda x: x[1], group["Languages"]))) for group in groups]
 
         elif self.typeView == TVIEWWORD:
-            wordsTR = base.getTranslatesWord(self.wordID)
+            wordsTR = self.base.getTranslatesWord(self.wordID)
             # [('74', 'plate', 'Английский'), ...]
             rows = [(str(w[0]), w[1], w[3]) for w in wordsTR]
         elif self.typeView == TVIEWWORDS:
-            wordsTR = base.getAllWords()
+            wordsTR = self.base.getAllWords()
             # [('74', 'plate', 'Английский', 'описание'), ...]
             rows = [(str(w[0]), w[1], w[3], w[5]) for w in wordsTR]
         print("rows", rows)
@@ -532,7 +532,7 @@ think
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    base = db.DateBase("Learning_translate.sqlite")
-    window = ExplorerWords(base)
+    _base = db.DateBase("Learning_translate.sqlite")
+    window = ExplorerWords(_base)
     window.show()
     sys.exit(app.exec())

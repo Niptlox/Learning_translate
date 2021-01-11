@@ -69,10 +69,13 @@ class Test():
         self.answerWord = translateWords[iWord]
         return word, iWord, translateWords
 
+    def getCountWords(self):
+        return self.countWords
+
     def answer(self, word):
         self.nowCAnswers += 1
         if self.typeTest in (TEST_ENDLESS_LOOP, TEST_CONTROL):
-            qID, qWord = self.questionWord
+            # qID, qWord = self.questionWord
             learn_cof = LEARN_COF
             learn_max = LEARN_MAX
             learn_min = LEARN_MIN
@@ -90,7 +93,8 @@ class Test():
             return out
 
     def result(self):
-        trueCof = self.trueCAnswers / self.nowCAnswers
+        nca = self.nowCAnswers
+        trueCof = (self.trueCAnswers / nca) if nca != 0 else 0
         return trueCof, self.trueCAnswers, self.nowCAnswers
 
 
@@ -114,8 +118,8 @@ if __name__ == '__main__':
     groupID = int(input("Номер группы:"))
     langID = int(input("Номер языка:"))
 
-    test = Test(base, groupID, langID, typeTest=TEST_ENDLESS_LOOP)
     test = Test(base, groupID, langID, typeTest=TEST_CONTROL)
+    test = Test(base, groupID, langID, typeTest=TEST_ENDLESS_LOOP)
 
     while True:
         out = test.question()
@@ -134,4 +138,4 @@ if __name__ == '__main__':
         print("Вы ответили верно" if out else f"Вы ответили не верно. Верный ответ {trans[iTrans][1]}")
         print()
     result = test.result()
-    print("Результат", result[0] * 100, "баллов;", result[1], "/", result[2], "слов")
+    print("Результат", round(result[0] * 100, 2), "баллов;", result[1], "/", result[2], "слов")
